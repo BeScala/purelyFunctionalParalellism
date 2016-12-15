@@ -1,11 +1,10 @@
 package bescala
 
-/**
-  * Created by lduponch on 13/12/2016.
-  */
 import java.util.concurrent._
 
 import language.{higherKinds, implicitConversions}
+
+import Util.async
 
 object Active extends Common {
 
@@ -30,11 +29,12 @@ object Active extends Common {
 
   override def map[A,B](parA: Par[A])(a2b: A => B): Par[B] =
     es =>
-      toM(a2b(run(es)(parA)))
+      toM(a2b(parA(es).get))
 
   override def map2[A,B,C](parA: Par[A], parB: Par[B])(ab2c: (A,B) => C): Par[C] =
     es =>
-      toM(ab2c(run(es)(parA), run(es)(parB)))
+      toM(ab2c(parA(es).get, parB(es).get))
+
 
 
 
@@ -50,11 +50,13 @@ object Active extends Common {
 
   override def flatMap[A,B](parA: Par[A])(a2pb: A => Par[B]): Par[B] =
     es =>
-      (a2pb(run(es)(parA)))(es)
+      (a2pb(parA(es).get))(es)
 
   override def fork[A](parA: => Par[A]): Par[A] =
-    es => 
-      par(es)(run(es)(parA))
+    es => {
+      print("F")
+      async(es)(parA(es).get)
+    }
 
 }
 

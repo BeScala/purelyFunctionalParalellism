@@ -1,22 +1,12 @@
 package bescala
 
-import java.util.concurrent.{Callable, ExecutorService, Future}
+import java.util.concurrent.ExecutorService
 
 import language.{higherKinds, implicitConversions}
 
-/**
-  * Created by lucd on 12/13/16.
-  */
+import Util.async
+
 trait Common {
-
-  //
-  // Future Utility
-  //
-
-  def par[A](es: ExecutorService)(a: => A): Future[A] =
-    es.submit(new Callable[A] {
-      def call = a
-    })
 
   //
   // abstract type
@@ -91,17 +81,17 @@ trait Common {
     fork(unit(a))
 
   def forkedMap[A, B](parA: Par[A])(a2b: A => B): Par[B] =
-    fork(map(parA)(a2b))
+    fork(map(fork(parA))(a2b))
 
   def forkedMap2[A,B,C](parA: Par[A], parB: Par[B])(ab2c: (A,B) => C): Par[C] =
-    map2(fork(parA), fork(parB))(ab2c)
+    fork(map2(fork(parA), fork(parB))(ab2c))
 
   def forkedSequence[A](parAs: List[Par[A]]): Par[List[A]] = fork {
     if (parAs.isEmpty) unit(List())
-    else if (parAs.length == 1) map(parAs.head)(List(_))
+    else if (parAs.length == 1) forkedMap(parAs.head)(List(_))
     else {
       val (lpas, rpas) = parAs.splitAt(parAs.length/2)
-      map2(forkedSequence(lpas), forkedSequence(rpas))(_ ++ _)
+      forkedMap2(forkedSequence(lpas), forkedSequence(rpas))(_ ++ _)
     }
   }
 

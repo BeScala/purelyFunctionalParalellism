@@ -1,13 +1,12 @@
 package bescala
 
-/**
-  * Created by lucd on 12/14/16.
-  */
 import java.util.concurrent._
 
 import language.{higherKinds, implicitConversions}
 
-abstract class Basic extends Common {
+import Util.async
+
+object Basic extends Common {
 
   override type M[A] = A
 
@@ -23,18 +22,18 @@ abstract class Basic extends Common {
 
 
 
-  override def run[A](es: ExecutorService)(parA: => Par[A]): A = fromM(par(es)(parA(es)).get)
+  override def run[A](es: ExecutorService)(parA: => Par[A]): A = async(es)(parA(es)).get
 
 
 
 
   override def map[A,B](parA: Par[A])(a2b: A => B): Par[B] =
     es =>
-      toM(a2b(run(es)(parA)))
+      a2b(run(es)(parA))
 
   override def map2[A,B,C](parA: Par[A], parB: Par[B])(ab2c: (A,B) => C): Par[C] =
     es =>
-      toM(ab2c(run(es)(parA), run(es)(parB)))
+      ab2c(run(es)(parA), run(es)(parB))
 
 
 
@@ -53,6 +52,8 @@ abstract class Basic extends Common {
       (a2pb(run(es)(parA)))(es)
 
   override def fork[A](parA: => Par[A]): Par[A] =
-    es =>
+    es => {
+      print("F")
       run(es)(parA)
+    }
 }

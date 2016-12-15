@@ -1,11 +1,10 @@
 package bescala
 
-/**
-  * Created by lduponch on 13/12/2016.
-  */
 import java.util.concurrent._
 
 import scala.language.{higherKinds, implicitConversions}
+
+import Util.async
 
 object Reactive extends Common {
 
@@ -14,7 +13,7 @@ object Reactive extends Common {
   override def fromM[A](ma: M[A]): A = {
     val ref = new java.util.concurrent.atomic.AtomicReference[A]
     val latch = new CountDownLatch(1)
-    ma {a => ref.set(a); latch.countDown }
+    ma { a => ref.set(a); latch.countDown }
     latch.await
     ref.get
   }
@@ -30,20 +29,20 @@ object Reactive extends Common {
 
   override def map[A, B](parA: Par[A])(a2b: A => B): Par[B] =
     es => callbackB =>
-      parA(es) { a => par(es)(callbackB(a2b(a))) }
+      parA(es) { a => async(es)(callbackB(a2b(a))) }
 
   override def map2[A, B, C](parA: Par[A], parB: Par[B])(ab2c: (A, B) => C): Par[C] =
     es => callbackC => {
       var optionalA: Option[A] = None
       var optionalB: Option[B] = None
-      val combiner = AsyncActor.choice[A, B](es)(
-        a =>
-          if (optionalB.isDefined) par(es)(callbackC(ab2c(a, optionalB.get)))
-          else optionalA = Some(a),
-        b =>
-          if (optionalA.isDefined) par(es)(callbackC(ab2c(optionalA.get, b)))
+      val combiner = new Actor[Either[A, B]] (es) ({
+        case Left(a) =>
+          if (optionalB.isDefined) async(es)(callbackC(ab2c(a, optionalB.get)))
+          else optionalA = Some(a)
+        case Right(b) =>
+          if (optionalA.isDefined) async(es)(callbackC(ab2c(optionalA.get, b)))
           else optionalB = Some(b)
-      )
+      })
       parA(es) { a => combiner ! Left(a) }
       parB(es) { b => combiner ! Right(b) }
     }
@@ -53,8 +52,10 @@ object Reactive extends Common {
       parA(es) { a => a2pb(a)(es)(callbackB) }
 
   override def fork[A](parA: => Par[A]): Par[A] =
-    es => callbackA =>
-      par(es)(parA(es)(callbackA))
+    es => callbackA => {
+      print("F")
+      async(es)(parA(es)(callbackA))
+    }
 
 }
 
