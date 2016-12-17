@@ -24,12 +24,12 @@ trait Common {
   // abstract M[A] related
   //
 
-  def fromM[A](ma: M[A]): A
+   def fromM[A](ma: M[A]): A
 
-  def toM[A](a: => A): M[A]
+   def toM[A](a: => A): M[A]
 
   //
-  // abstract applicative and monad features
+  // abstract applicative and monad Par[A] features
   //
 
   def map[A, B](parA: Par[A])(a2b: A => B): Par[B]
@@ -38,8 +38,9 @@ trait Common {
 
   def flatMap[A, B](parA: Par[A])(a2pb: A => Par[B]): Par[B]
 
+
   //
-  //  only extra abstract feature
+  //  only extra abstract Par[A] feature
   //
 
   def fork[A](parA: => Par[A]): Par[A]
@@ -48,9 +49,12 @@ trait Common {
   // concrete
   //
 
-  def run[A](es: ExecutorService)(parA: => Par[A]): A = fromM(parA(es))
+  def unit[A](a: => A): Par[A] =
+    es =>
+      toM(a)
 
-  def unit[A](a: => A): Par[A] = es => toM(a)
+  def run[A](es: ExecutorService)(parA: => Par[A]): A =
+    fromM(parA(es))
 
   def join[A](parParA: Par[Par[A]]): Par[A] =
     flatMap(parParA)(x => x)
@@ -90,8 +94,8 @@ trait Common {
     if (parAs.isEmpty) unit(List())
     else if (parAs.length == 1) forkedMap(parAs.head)(List(_))
     else {
-      val (lpas, rpas) = parAs.splitAt(parAs.length/2)
-      forkedMap2(forkedSequence(lpas), forkedSequence(rpas))(_ ++ _)
+      val (lparAs, rparAs) = parAs.splitAt(parAs.length/2)
+      forkedMap2(forkedSequence(lparAs), forkedSequence(rparAs))(_ ++ _)
     }
   }
 
