@@ -13,6 +13,7 @@ object Util {
 
   def async[A](es: ExecutorService)(a: => A): Future[A] =
     es.submit(new Callable[A] {
+      print(".")
       def call = a
     })
 
@@ -44,7 +45,7 @@ object Util {
     if(cond) a
     else when(cond)(a)
 
-  def whenDefined[A](optionalA: => Option[A]): A =
+  def whenDefinedGet[A](optionalA: => Option[A]): A =
     when(optionalA != None)(optionalA.get)
 
   //

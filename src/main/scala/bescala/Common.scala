@@ -38,7 +38,6 @@ trait Common {
 
   def flatMap[A, B](parA: Par[A])(a2pb: A => Par[B]): Par[B]
 
-
   //
   //  only extra abstract Par[A] feature
   //
@@ -57,7 +56,7 @@ trait Common {
     fromM(parA(es))
 
   def join[A](parParA: Par[Par[A]]): Par[A] =
-    flatMap(parParA)(x => x)
+    flatMap(parParA)(identity)
 
   def choice[A](parBoolean: Par[Boolean])(trueParA: Par[A], falseParA: Par[A]): Par[A] =
     flatMap(parBoolean)(b => if (b) trueParA else falseParA)
@@ -85,17 +84,19 @@ trait Common {
     fork(unit(a))
 
   def forkedMap[A, B](parA: Par[A])(a2b: A => B): Par[B] =
-    fork(map(fork(parA))(a2b))
+    map(fork(parA))(a2b)
+//     fork(map(fork(parA))(a2b))
 
   def forkedMap2[A,B,C](parA: Par[A], parB: Par[B])(ab2c: (A,B) => C): Par[C] =
-    fork(map2(fork(parA), fork(parB))(ab2c))
+    map2(fork(parA), fork(parB))(ab2c)
+//     fork(map2(fork(parA), fork(parB))(ab2c))
 
   def forkedSequence[A](parAs: List[Par[A]]): Par[List[A]] = fork {
     if (parAs.isEmpty) unit(List())
     else if (parAs.length == 1) forkedMap(parAs.head)(List(_))
     else {
-      val (lparAs, rparAs) = parAs.splitAt(parAs.length/2)
-      forkedMap2(forkedSequence(lparAs), forkedSequence(rparAs))(_ ++ _)
+      val (leftParAs, rightParAs) = parAs.splitAt(parAs.length/2)
+      forkedMap2(forkedSequence(leftParAs), forkedSequence(rightParAs))(_ ++ _)
     }
   }
 
