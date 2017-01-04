@@ -18,8 +18,8 @@ object ParApp extends App {
       def verboseForkedUnit[A](a: => A): Par[A] = forkedUnit(verbose(a))
 
       println(s"\nresult: ${run(es)(map(sequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
-      //println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseUnit(_))))(_.sum))}")
-      //println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
+      println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseUnit(_))))(_.sum))}")
+      println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
 
     }
 
@@ -33,8 +33,8 @@ object ParApp extends App {
 
       println(s"\nresult: ${run(es)(map(sequence((0 to 9).toList.map(verboseUnit(_))))(_.sum))}")
       println(s"\nresult: ${run(es)(map(sequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
-      //println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseUnit(_))))(_.sum))}")
-      //println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
+      println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseUnit(_))))(_.sum))}")
+      println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
 
     }
 
@@ -47,8 +47,8 @@ object ParApp extends App {
       def verboseForkedUnit[A](a: => A): Par[A] = forkedUnit(verbose(a))
 
       println(s"\nresult: ${run(es)(map(sequence((0 to 9).toList.map(verboseUnit(_))))(_.sum))}")
-      //println(s"\nresult: ${run(es)(map(sequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
-      //println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
+      println(s"\nresult: ${run(es)(map(sequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
+      println(s"\nresult: ${run(es)(forkedMap(forkedSequence((0 to 9).toList.map(verboseForkedUnit(_))))(_.sum))}")
 
     }
 

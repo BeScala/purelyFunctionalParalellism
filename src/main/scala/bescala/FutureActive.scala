@@ -3,7 +3,7 @@ package bescala
 import java.util.concurrent._
 
 import language.{higherKinds, implicitConversions}
-import Util.{async, whenDefinedGet}
+import Util.{async}
 
 object FutureActive extends ActiveCommon {
 
@@ -20,9 +20,12 @@ object FutureActive extends ActiveCommon {
       def cancel(evenIfRunning: Boolean): Boolean = false
     }
 
-//  override def map2[A, B, C](parA: Par[A], parB: Par[B])(ab2c: (A, B) => C): Par[C] =
-//    es =>
-//      toM(ab2c(fromM(parA(es)), fromM(parB(es))))
+  override def map2[A, B, C](parA: Par[A], parB: Par[B])(ab2c: (A, B) => C): Par[C] =
+    es => {
+      val ma = parA(es)
+      val mb = parB(es)
+      toM(ab2c(fromM(ma), fromM(mb)))
+    }
 
 
   override def fork[A](parA: => Par[A]): Par[A] =

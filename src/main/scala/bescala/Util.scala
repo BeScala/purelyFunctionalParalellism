@@ -3,7 +3,7 @@ package bescala
 import java.util.concurrent._
 import java.util.concurrent.atomic._
 
-import scala.annotation.tailrec
+import scala.math._
 
 object Util {
 
@@ -37,23 +37,11 @@ object Util {
   }
 
   //
-  // kind of tricky `when` utility function: use VERY carefully
-  //
-
-  @tailrec
-  def when[A](cond: => Boolean)(a: => A): A =
-    if(cond) a
-    else when(cond)(a)
-
-  def whenDefinedGet[A](optionalA: => Option[A]): A =
-    when(optionalA != None)(optionalA.get)
-
-  //
   // utilities that can be used to show stuff
   //
 
   def randomVerboseSleep(time: Int): Unit = {
-    Thread.sleep(scala.math.ceil(scala.math.random * time).toLong)
+    Thread.sleep(ceil(random * time).toLong)
   }
 
   def verbose[A](blockA: => A): A = {
