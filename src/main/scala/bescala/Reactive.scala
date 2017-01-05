@@ -6,96 +6,96 @@ import scala.language.{higherKinds, implicitConversions}
 
 object Reactive extends Common {
 
-  override type M[A] = (A => Unit) => Unit
+  // C stands for Callback
+  type C[A] = A => Unit
+
+  // think of it as a callback invoker
+  override type M[A] = C[A] => Unit
 
   override def fromM[A](ma: M[A]): A = {
     val atomic = new Atomic[A]
-    val callbackA: A => Unit = a => atomic.setValue(a)
-    ma(callbackA)
+    val ca: A => Unit = a => atomic.setValue(a)
+    ma(ca)
     atomic.getValue
   }
 
+  // invoke a callback `ca` by providing it with an `a`
   override def toM[A](a: => A): M[A] =
-    callbackA =>
-      callbackA(a)
+  ca =>
+    ca(a)
 
   private def toPar[A](ma: M[A]): Par[A] =
     es =>
-      callbackA =>
-        async(es)(ma(callbackA))
+      ca =>
+        async(es)(ma(ca))
 
   private def toPar[A](a: => A): Par[A] =
     toPar(toM(a))
 
-  override def map[A, B](parA: Par[A])(a2b: A => B): Par[B] =
+  override def map[A, B](pa: Par[A])(a2b: A => B): Par[B] =
     es =>
-      callbackB => {
-        val ma: M[A] = parA(es)
-        val callbackA: A => Unit =
+      cb => {
+        val ma: M[A] = pa(es)
+        val ca: A => Unit =
           a => {
-            val parB: Par[B] = toPar(a2b(a))
-            val mb: M[B] = parB(es)
-            mb(callbackB)
+            val pb: Par[B] = toPar(a2b(a))
+            val mb: M[B] = pb(es)
+            mb(cb)
           }
-        // val callbackA: A => Unit = a => async(es)(callbackB(a2b(a)))
-        ma(callbackA)
+        ma(ca)
       }
 
-  override def map2[A, B, C](parA: Par[A], parB: Par[B])(ab2c: (A, B) => C): Par[C] =
+  override def map2[A, B, C](pa: Par[A], pb: Par[B])(ab2c: (A, B) => C): Par[C] =
     es =>
-      callbackC => {
+      cC => {
         var optionalA: Option[A] = None
         var optionalB: Option[B] = None
         val combinerActor = new Actor[Either[A, B]](es)({
           case Left(a) =>
             if (optionalB.isDefined) {
-              val parC: Par[C] = toPar(ab2c(a, optionalB.get))
-              val mc: M[C] = parC(es)
-              mc(callbackC)
+              val pC: Par[C] = toPar(ab2c(a, optionalB.get))
+              val mc: M[C] = pC(es)
+              mc(cC)
             }
-            // async(es)(callbackC(ab2c(a, optionalB.get)))
             else
               optionalA = Some(a)
           case Right(b) =>
             if (optionalA.isDefined) {
-              val parC: Par[C] = toPar(ab2c(optionalA.get, b))
-              val mc: M[C] = parC(es)
-              mc(callbackC)
+              val pC: Par[C] = toPar(ab2c(optionalA.get, b))
+              val mc: M[C] = pC(es)
+              mc(cC)
             }
-            // async(es)(callbackC(ab2c(optionalA.get, b)))
             else
               optionalB = Some(b)
         })
-        val ma: M[A] = parA(es)
-        val callbackA: A => Unit = a => combinerActor ! Left(a)
-        val mb: M[B] = parB(es)
-        val callbackB: B => Unit = b => combinerActor ! Right(b)
-        ma(callbackA)
-        mb(callbackB)
+        val ma: M[A] = pa(es)
+        val ca: A => Unit = a => combinerActor ! Left(a)
+        val mb: M[B] = pb(es)
+        val cb: B => Unit = b => combinerActor ! Right(b)
+        ma(ca)
+        mb(cb)
       }
 
-  override def flatMap[A, B](parA: Par[A])(a2pb: A => Par[B]): Par[B] =
+  override def flatMap[A, B](pa: Par[A])(a2pb: A => Par[B]): Par[B] =
     es =>
-      callbackB => {
-        val ma: M[A] = parA(es)
-        val callbackA: A => Unit =
+      cb => {
+        val ma: M[A] = pa(es)
+        val ca: A => Unit =
           a => {
-            val parB: Par[B] = a2pb(a)
-            val mb: M[B] = parB(es)
-            mb(callbackB)
+            val pb: Par[B] = a2pb(a)
+            val mb: M[B] = pb(es)
+            mb(cb)
           }
-        // a2pb(a)(es)(callbackB)
-        ma(callbackA)
+        ma(ca)
       }
 
-  override def fork[A](parA: => Par[A]): Par[A] =
+  override def fork[A](pa: => Par[A]): Par[A] =
     es =>
-      callbackA => {
-        val ma = parA(es)
-        val par_a: Par[A] = toPar(ma)
-        val m_a: M[A] = par_a(es)
-        m_a(callbackA)
-        // async(es)(ma(callbackA))
+      ca => {
+        val ma = pa(es)
+        val p_a: Par[A] = toPar(ma)
+        val m_a: M[A] = p_a(es)
+        m_a(ca)
       }
 
 }

@@ -3,10 +3,9 @@ package bescala
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.atomic.{AtomicInteger, AtomicReference}
 
-import scala.annotation.tailrec
 import bescala.Util.async
 
-import scala.util.{Left, Right}
+import scala.annotation.tailrec
 
 
 //              node
@@ -26,7 +25,7 @@ class Actor[M]
 
   val nullM = null.asInstanceOf[M]
 
-  private val maxNumberOfProcessedMessages = 2
+  private val maxNumberOfProcessedMessages = 20
 
   private val suspended = new AtomicInteger(1)
 

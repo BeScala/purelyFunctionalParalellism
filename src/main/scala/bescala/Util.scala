@@ -13,8 +13,9 @@ object Util {
 
   def async[A](es: ExecutorService)(a: => A): Future[A] =
     es.submit(new Callable[A] {
-      print(".")
-      def call = a
+      def call = {
+        print("."); a
+      }
     })
 
 
@@ -40,7 +41,7 @@ object Util {
   // utilities that can be used to show stuff
   //
 
-  def randomVerboseSleep(time: Int): Unit = {
+  private def randomVerboseSleep(time: Int): Unit = {
     Thread.sleep(ceil(random * time).toLong)
   }
 
